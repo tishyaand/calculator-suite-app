@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Suite | Multi-Tool Calculator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Tone.js for optional audio SFX -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f5ff',
+                            100: '#e0ebff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        },
+                        dark: {
+                            bg: '#090d16',
+                            card: 'rgba(15, 23, 42, 0.75)',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                            sidebar: 'rgba(11, 17, 32, 0.85)',
+                        }
+                    },
+                    boxShadow: {
+                        'neon-glow': '0 0 25px -5px rgba(99, 102, 241, 0.4)',
+                        'neon-cyan': '0 0 25px -5px rgba(6, 182, 212, 0.4)',
+                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.45)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background: radial-gradient(circle at 15% 15%, #0f172a 0%, #090d16 60%, #030712 100%);
+            background-attachment: fixed;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .glass-input {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #f8fafc;
+            transition: all 0.2s ease;
+        }
+
+        .glass-input:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 15px -3px rgba(99, 102, 241, 0.4);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(168, 85, 247, 0.15) 100%);
+            border-color: rgba(99, 102, 241, 0.5);
+            color: #ffffff;
+            box-shadow: 0 0 20px -5px rgba(99, 102, 241, 0.3);
+        }
+
+        .nav-btn.active i {
+            color: #818cf8;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="h-full text-slate-100 font-sans antialiased overflow-x-hidden flex flex-col md:flex-row min-h-screen">
+
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div class="absolute -top-32 -left-32 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/3 -right-32 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-32 left-1/3 w-96 h-96 bg-cyan-600/15 rounded-full blur-3xl"></div>
+    </div>
+
+    <aside id="sidebar" class="relative z-20 w-full md:w-72 glass-panel border-r border-white/10 flex flex-col justify-between shrink-0 transition-all duration-300">
+        <div>
+            <!-- Header Brand -->
+            <div class="p-6 flex items-center justify-between border-b border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="p-2.5 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-xl shadow-neon-glow">
+                        <i data-lucide="calculator" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-extrabold text-lg tracking-wide bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">NexusSuite</h1>
+                        <p class="text-[11px] text-slate-400 font-medium">GitMatch Styled Pro Calc</p>
+                    </div>
+                </div>
+                <button id="mobileMenuBtn" class="md:hidden p-2 text-slate-400 hover:text-white rounded-lg glass-card">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav id="navContainer" class="p-4 space-y-1.5 hidden md:block">
+                <p class="px-3 py-2 text-[10px] font-semibold tracking-wider text-slate-500 uppercase">Tools & Calculators</p>
+                
+                <button onclick="switchTab('standard')" data-tab="standard" class="nav-btn active w-full flex items-center gap-3 px-3.5 py-3 rounded-xl border border-transparent text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-all">
+                    <i data-lucide="calculator" class="w-4 h-4 text-slate-400"></i>
+                    <span>Standard / Scientific</span>
+                </button>
+
+                <button onclick="switchTab('bmi')" data-tab="bmi" class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl border border-transparent text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-all">
+                    <i data-lucide="activity" class="w-4 h-4 text-slate-400"></i>
+                    <span>BMI Calculator</span>
+                </button>
+
+                <button onclick="switchTab('currency')" data-tab="currency" class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl border border-transparent text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-all">
+                    <i data-lucide="coins" class="w-4 h-4 text-slate-400"></i>
+                    <span>Currency Converter</span>
+                </button>
+
+                <button onclick="switchTab('investment')" data-tab="investment" class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl border border-transparent text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-all">
+                    <i data-lucide="trending-up" class="w-4 h-4 text-slate-400"></i>
+                    <span>Investment Growth</span>
+                </button>
+
+                <button onclick="switchTab('loan')" data-tab="loan" class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl border border-transparent text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-all">
+                    <i data-lucide="landmark" class="w-4 h-4 text-slate-400"></i>
+                    <span>Loan / Mortgage</span>
+                </button>
+
+                <button onclick="switchTab('savings')" data-tab="savings" class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl border border-transparent text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-all">
+                    <i data-lucide="piggy-bank" class="w-4 h-4 text-slate-400"></i>
+                    <span>Savings Goal</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Sidebar Footer -->
+        <div class="p-4 border-t border-white/10 hidden md:block">
+            <div class="glass-card p-3 rounded-xl flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-xs text-slate-300 font-medium">GitMatch Theme v2.0</span>
+                </div>
+                <button id="soundToggle" title="Toggle Audio Sound Effects" class="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white">
+                    <i data-lucide="volume-2" id="soundIcon" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <main class="relative z-10 flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
+
+        <!-- Top Header Controls -->
+        <header class="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
+            <div>
+                <h2 id="viewTitle" class="text-2xl font-bold text-white tracking-tight">Standard & Scientific Calculator</h2>
+                <p id="viewSubtitle" class="text-xs text-slate-400 mt-1">Perform daily mathematical calculations and scientific evaluations.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="copyToClipboardCurrent()" class="glass-card hover:bg-white/10 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white flex items-center gap-2 transition-all">
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">Copy Result</span>
+                </button>
+            </div>
+        </header>
+
+        <section id="tab-standard" class="tab-content grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-7 glass-panel rounded-3xl p-5 sm:p-6 shadow-glass flex flex-col gap-4">
+                
+                <!-- Display Screen -->
+                <div class="bg-slate-950/80 border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col justify-between min-h-[120px] shadow-inner relative overflow-hidden">
+                    <div id="prevExpression" class="font-mono text-sm text-slate-400 min-h-[1.5rem] text-right overflow-x-auto whitespace-nowrap"></div>
+                    <div id="currentDisplay" class="font-mono text-3xl sm:text-4xl font-bold text-right text-white tracking-tight overflow-x-auto whitespace-nowrap">0</div>
+                </div>
+
+                <!-- Scientific Controls Row -->
+                <div class="grid grid-cols-5 gap-2 text-xs font-medium">
+                    <button onclick="scientificOp('sin')" class="glass-card hover:bg-white/10 p-2.5 rounded-xl text-indigo-300">sin</button>
+                    <button onclick="scientificOp('cos')" class="glass-card hover:bg-white/10 p-2.5 rounded-xl text-indigo-300">cos</button>
+                    <button onclick="scientificOp('tan')" class="glass-card hover:bg-white/10 p-2.5 rounded-xl text-indigo-300">tan</button>
+                    <button onclick="scientificOp('sqrt')" class="glass-card hover:bg-white/10 p-2.5 rounded-xl text-indigo-300">√</button>
+                    <button onclick="scientificOp('pow')" class="glass-card hover:bg-white/10 p-2.5 rounded-xl text-indigo-300">x²</button>
+                </div>
+
+                <!-- Main Keypad Grid -->
+                <div class="grid grid-cols-4 gap-2.5">
+                    <button onclick="handleClear()" class="glass-card hover:bg-red-500/20 text-red-400 border-red-500/20 font-semibold py-3.5 rounded-2xl text-lg">AC</button>
+                    <button onclick="handleBackspace()" class="glass-card hover:bg-white/10 text-slate-300 py-3.5 rounded-2xl flex items-center justify-center">
+                        <i data-lucide="delete" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="toggleSign()" class="glass-card hover:bg-white/10 text-slate-300 py-3.5 rounded-2xl text-lg">±</button>
+                    <button onclick="handleOperator('/')" class="glass-card hover:bg-indigo-500/20 text-indigo-400 font-bold py-3.5 rounded-2xl text-lg">÷</button>
+
+                    <button onclick="appendDigit('7')" class="glass-card hover:bg-white/10 text-white py-3.5 rounded-2xl text-lg font-medium">7</button>
+                    <button onclick="appendDigit('8')" class="glass-card hover:bg-white/10 text-white py-3.5 rounded-2xl text-lg font-medium">8</button>
+                    <button onclick="appendDigit('9')" class="glass-card hover:bg-white/10 text-white py-3.5 rounded-2xl text-lg font-medium">9</button>
+                    <button onclick="handleOperator('*')" class="glass-card hover:bg-indigo-500/20 text-indigo-400 font-bold py-3.5 rounded-2xl text-lg">×</button>
+
+                    <button onclick="appendDigit('4')" class="glass-card hover:bg-white/10 text-white py-3.5 rounded-2xl text-lg font-medium">4</button>
+                    <button onclick="appendDigit('5')" class="glass-card hover:bg-white/10 text-white py-3.5 rounded-2xl text-lg font-medium">5</button>
+                    <button onclick="appendDigit('6')" class="glass-card hover:bg-white/10 text-white py-3.5 rounded-2xl text-lg font-medium">6</button>
+                    <button onclick="handleOperator('-')" class="glass-card hover:bg-indigo-500/20 text-indigo-400 font-bold py-3.5 rounded-2xl text-lg">−</button>
+
+                    <button onclick="appendDigit('1')" class="glass-card hover:bg-white/10 text-white py-3.5 rounded-2xl text-lg font-medium">1</button>
+                    <button onclick="appendDigit('2')" class="glass-card hover:bg-white/10 text-white py-3.5 rounded-2xl text-lg font-medium">2</button>
+                    <button onclick="appendDigit('3')" class="glass-card hover:bg-white/10 text-white py-3.5 rounded-2xl text-lg font-medium">3</button>
+                    <button onclick="handleOperator('+')" class="glass-card hover:bg-indigo-500/20 text-indigo-400 font-bold py-3.5 rounded-2xl text-lg">+</button>
+
+                    <button onclick="handlePercent()" class="glass-card hover:bg-white/10 text-slate-300 py-3.5 rounded-2xl text-lg">%</button>
+                    <button onclick="appendDigit('0')" class="glass-card hover:bg-white/10 text-white py-3.5 rounded-2xl text-lg font-medium">0</button>
+                    <button onclick="appendDecimal()" class="glass-card hover:bg-white/10 text-white py-3.5 rounded-2xl text-lg font-bold">.</button>
+                    <button onclick="calculateResult(true)" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-2xl text-xl shadow-neon-glow transition-all active:scale-95">=</button>
+                </div>
+            </div>
+
+            <!-- History Panel -->
+            <div class="lg:col-span-5 glass-panel rounded-3xl p-5 sm:p-6 shadow-glass flex flex-col h-full min-h-[380px]">
+                <div class="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
+                    <div class="flex items-center gap-2 text-slate-200 font-semibold text-sm">
+                        <i data-lucide="history" class="w-4 h-4 text-indigo-400"></i>
+                        <span>History Log</span>
+                    </div>
+                    <button onclick="clearHistory()" class="text-xs text-slate-400 hover:text-red-400 flex items-center gap-1">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Clear
+                    </button>
+                </div>
+                <div id="historyList" class="flex-1 overflow-y-auto space-y-2 pr-1">
+                    <div id="emptyHistory" class="text-center text-slate-500 my-auto py-12 text-sm">
+                        No calculations yet.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-bmi" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass-panel rounded-3xl p-6 shadow-glass space-y-5">
+                <h3 class="text-lg font-bold text-white border-b border-white/10 pb-3">Body Mass Index Input</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1.5">Height (cm)</label>
+                        <input type="number" id="bmiHeight" value="170" placeholder="e.g. 170" class="w-full glass-input px-4 py-3 rounded-xl text-lg font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1.5">Weight (kg)</label>
+                        <input type="number" id="bmiWeight" value="65" placeholder="e.g. 65" class="w-full glass-input px-4 py-3 rounded-xl text-lg font-mono">
+                    </div>
+                    <button onclick="calculateBMI()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-white shadow-neon-glow transition-all">
+                        Calculate BMI
+                    </button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-6 glass-panel rounded-3xl p-6 shadow-glass flex flex-col justify-between space-y-6">
+                <div>
+                    <h3 class="text-lg font-bold text-white border-b border-white/10 pb-3">BMI Analysis</h3>
+                    <div class="mt-6 text-center">
+                        <span class="text-xs text-slate-400 uppercase tracking-widest font-semibold">Your Result</span>
+                        <div id="bmiScore" class="text-5xl font-black font-mono my-2 text-indigo-400">22.5</div>
+                        <div id="bmiBadge" class="inline-block px-3.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                            Normal Weight
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Progress Gauge -->
+                <div class="space-y-2">
+                    <div class="flex justify-between text-xs text-slate-400">
+                        <span>Underweight (&lt;18.5)</span>
+                        <span>Normal (18.5-24.9)</span>
+                        <span>Overweight (&gt;25)</span>
+                    </div>
+                    <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden flex">
+                        <div class="h-full w-1/4 bg-cyan-500/70"></div>
+                        <div class="h-full w-2/4 bg-emerald-500/70"></div>
+                        <div class="h-full w-1/4 bg-rose-500/70"></div>
+                    </div>
+                </div>
+
+                <div id="bmiAdvice" class="p-4 glass-card rounded-2xl text-xs text-slate-300 leading-relaxed border-l-4 border-indigo-500">
+                    Your BMI is within the healthy range. Keep maintaining a balanced diet and regular physical activity!
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-currency" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-7 glass-panel rounded-3xl p-6 shadow-glass space-y-5">
+                <h3 class="text-lg font-bold text-white border-b border-white/10 pb-3">Convert Currencies</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1.5">Amount</label>
+                        <input type="number" id="currAmount" value="100" class="w-full glass-input px-4 py-3 rounded-xl text-xl font-mono">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 items-center">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">From</label>
+                            <select id="currFrom" class="w-full glass-input px-3 py-3 rounded-xl text-sm">
+                                <option value="USD">USD - US Dollar</option>
+                                <option value="EUR">EUR - Euro</option>
+                                <option value="GBP">GBP - British Pound</option>
+                                <option value="IDR">IDR - Indonesian Rupiah</option>
+                                <option value="JPY">JPY - Japanese Yen</option>
+                            </select>
+                        </div>
+                        
+                        <div class="text-center pt-4">
+                            <button onclick="swapCurrencies()" class="p-3 glass-card hover:bg-white/10 rounded-xl text-indigo-400 transition-all">
+                                <i data-lucide="arrow-right-left" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">To</label>
+                            <select id="currTo" class="w-full glass-input px-3 py-3 rounded-xl text-sm">
+                                <option value="IDR" selected>IDR - Indonesian Rupiah</option>
+                                <option value="USD">USD - US Dollar</option>
+                                <option value="EUR">EUR - Euro</option>
+                                <option value="GBP">GBP - British Pound</option>
+                                <option value="JPY">JPY - Japanese Yen</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button onclick="convertCurrency()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-white shadow-neon-glow transition-all">
+                        Convert
+                    </button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-5 glass-panel rounded-3xl p-6 shadow-glass flex flex-col justify-center text-center space-y-4">
+                <span class="text-xs text-slate-400 uppercase tracking-widest font-semibold">Converted Result</span>
+                <div id="currResult" class="text-3xl font-extrabold font-mono text-cyan-400">Rp 1,585,000.00</div>
+                <p id="currRateNote" class="text-xs text-slate-500">1 USD = 15,850.00 IDR</p>
+            </div>
+        </section>
+
+        <section id="tab-investment" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass-panel rounded-3xl p-6 shadow-glass space-y-4">
+                <h3 class="text-lg font-bold text-white border-b border-white/10 pb-3">Compound Investment Parameters</h3>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Initial Deposit ($)</label>
+                        <input type="number" id="invInitial" value="1000" class="w-full glass-input px-3 py-2.5 rounded-xl font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Monthly Contribution ($)</label>
+                        <input type="number" id="invMonthly" value="200" class="w-full glass-input px-3 py-2.5 rounded-xl font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Annual Interest Rate (%)</label>
+                        <input type="number" id="invRate" value="8" step="0.1" class="w-full glass-input px-3 py-2.5 rounded-xl font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Duration (Years)</label>
+                        <input type="number" id="invYears" value="10" class="w-full glass-input px-3 py-2.5 rounded-xl font-mono">
+                    </div>
+                </div>
+
+                <button onclick="calculateInvestment()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-white shadow-neon-glow transition-all">
+                    Calculate Projected Growth
+                </button>
+            </div>
+
+            <div class="lg:col-span-6 glass-panel rounded-3xl p-6 shadow-glass flex flex-col justify-between space-y-4">
+                <h3 class="text-lg font-bold text-white border-b border-white/10 pb-3">Future Value Breakdown</h3>
+                <div class="space-y-3">
+                    <div class="glass-card p-4 rounded-2xl flex justify-between items-center">
+                        <span class="text-xs text-slate-400">Total Future Balance</span>
+                        <span id="invTotal" class="text-2xl font-bold font-mono text-emerald-400">$37,380.00</span>
+                    </div>
+                    <div class="glass-card p-3 rounded-2xl flex justify-between items-center text-xs">
+                        <span class="text-slate-400">Total Deposits</span>
+                        <span id="invPrincipal" class="font-mono text-slate-200">$25,000.00</span>
+                    </div>
+                    <div class="glass-card p-3 rounded-2xl flex justify-between items-center text-xs">
+                        <span class="text-slate-400">Total Interest Earned</span>
+                        <span id="invInterest" class="font-mono text-indigo-400">$12,380.00</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-loan" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass-panel rounded-3xl p-6 shadow-glass space-y-4">
+                <h3 class="text-lg font-bold text-white border-b border-white/10 pb-3">Loan Details</h3>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Loan Amount ($)</label>
+                        <input type="number" id="loanAmount" value="250000" class="w-full glass-input px-3 py-2.5 rounded-xl font-mono">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Interest Rate (%)</label>
+                            <input type="number" id="loanRate" value="6.5" step="0.1" class="w-full glass-input px-3 py-2.5 rounded-xl font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Term (Years)</label>
+                            <input type="number" id="loanYears" value="30" class="w-full glass-input px-3 py-2.5 rounded-xl font-mono">
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="calculateLoan()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-white shadow-neon-glow transition-all">
+                    Calculate Monthly Repayments
+                </button>
+            </div>
+
+            <div class="lg:col-span-6 glass-panel rounded-3xl p-6 shadow-glass space-y-4">
+                <h3 class="text-lg font-bold text-white border-b border-white/10 pb-3">Repayment Summary</h3>
+                <div class="glass-card p-4 rounded-2xl text-center">
+                    <span class="text-xs text-slate-400 uppercase tracking-widest font-semibold">Monthly Payment</span>
+                    <div id="loanMonthly" class="text-3xl font-black font-mono text-purple-400 my-1">$1,580.17</div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div class="glass-card p-3 rounded-xl">
+                        <span class="text-slate-400 block mb-1">Total Payment</span>
+                        <span id="loanTotalPay" class="font-mono font-bold text-slate-200">$568,861.20</span>
+                    </div>
+                    <div class="glass-card p-3 rounded-xl">
+                        <span class="text-slate-400 block mb-1">Total Interest</span>
+                        <span id="loanTotalInt" class="font-mono font-bold text-rose-400">$318,861.20</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-savings" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass-panel rounded-3xl p-6 shadow-glass space-y-4">
+                <h3 class="text-lg font-bold text-white border-b border-white/10 pb-3">Savings Target</h3>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Target Savings Goal ($)</label>
+                        <input type="number" id="savGoal" value="20000" class="w-full glass-input px-3 py-2.5 rounded-xl font-mono">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Current Savings ($)</label>
+                            <input type="number" id="savCurrent" value="2000" class="w-full glass-input px-3 py-2.5 rounded-xl font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Timeframe (Months)</label>
+                            <input type="number" id="savMonths" value="24" class="w-full glass-input px-3 py-2.5 rounded-xl font-mono">
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="calculateSavings()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-white shadow-neon-glow transition-all">
+                    Calculate Monthly Savings Plan
+                </button>
+            </div>
+
+            <div class="lg:col-span-6 glass-panel rounded-3xl p-6 shadow-glass flex flex-col justify-center text-center space-y-4">
+                <span class="text-xs text-slate-400 uppercase tracking-widest font-semibold">Required Monthly Deposit</span>
+                <div id="savRequired" class="text-4xl font-black font-mono text-emerald-400">$750.00</div>
+                <p id="savNote" class="text-xs text-slate-400">Save $750.00 each month to reach your $20,000 goal in 24 months!</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none glass-panel border border-indigo-500/40 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-xs text-white">
+        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+        <span id="toastMsg">Action completed successfully</span>
+    </div>
+
+    <script>
+        // --- State Management ---
+        let currentTab = 'standard';
+        let calcInput = '0';
+        let prevExpr = '';
+        let resetInput = false;
+        let history = [];
+        let audioActive = true;
+        let synth = null;
+
+        // Dynamic Tab Info Data
+        const tabInfo = {
+            standard: { title: "Standard & Scientific Calculator", sub: "Perform arithmetic calculations and mathematical expressions." },
+            bmi: { title: "Body Mass Index (BMI) Calculator", sub: "Calculate your body mass index and healthy weight range." },
+            currency: { title: "Currency Converter", sub: "Quick currency rate estimations for international exchange." },
+            investment: { title: "Compound Investment Growth", sub: "Project your long-term wealth accumulation with compound interest." },
+            loan: { title: "Loan & Mortgage Calculator", sub: "Estimate monthly payments, interest totals, and payoff duration." },
+            savings: { title: "Savings Goal Planner", sub: "Calculate how much you need to set aside monthly to hit your targets." }
+        };
+
+        // --- Audio SFX Engine ---
+        function playTone(freq = 400) {
+            if (!audioActive) return;
+            try {
+                if (!synth && window.Tone) {
+                    synth = new Tone.Synth({
+                        oscillator: { type: "sine" },
+                        envelope: { attack: 0.001, decay: 0.08, sustain: 0, release: 0.08 }
+                    }).toDestination();
+                    synth.volume.value = -20;
+                }
+                if (Tone.context.state !== 'running') Tone.start();
+                synth.triggerAttackRelease(freq, "32n");
+            } catch (e) {}
+        }
+
+        // --- Navigation Controller ---
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.dataset.tab === tabId) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+
+            document.getElementById('viewTitle').textContent = tabInfo[tabId].title;
+            document.getElementById('viewSubtitle').textContent = tabInfo[tabId].sub;
+
+            // Close mobile menu on tab click
+            const nav = document.getElementById('navContainer');
+            if (window.innerWidth < 768) nav.classList.add('hidden');
+
+            playTone(500);
+        }
+
+        // --- Standard Calculator Functions ---
+        function updateDisplay() {
+            document.getElementById('currentDisplay').textContent = calcInput;
+            document.getElementById('prevExpression').textContent = prevExpr;
+        }
+
+        function appendDigit(digit) {
+            playTone(520);
+            if (calcInput === '0' || resetInput || calcInput === 'Error') {
+                calcInput = digit;
+                resetInput = false;
+            } else {
+                if (calcInput.length < 15) calcInput += digit;
+            }
+            updateDisplay();
+        }
+
+        function appendDecimal() {
+            playTone(560);
+            if (resetInput || calcInput === 'Error') {
+                calcInput = '0.';
+                resetInput = false;
+            } else if (!calcInput.includes('.')) {
+                calcInput += '.';
+            }
+            updateDisplay();
+        }
+
+        function handleOperator(op) {
+            playTone(600);
+            if (calcInput === 'Error') return;
+            const displayOp = op === '*' ? '×' : op === '/' ? '÷' : op === '-' ? '−' : '+';
+
+            if (resetInput && prevExpr !== '') {
+                prevExpr = prevExpr.slice(0, -2) + ' ' + displayOp;
+                updateDisplay();
+                return;
+            }
+
+            if (prevExpr !== '' && !resetInput) calculateResult(false);
+
+            prevExpr = `${calcInput} ${displayOp}`;
+            resetInput = true;
+            updateDisplay();
+        }
+
+        function handleClear() {
+            playTone(300);
+            calcInput = '0';
+            prevExpr = '';
+            resetInput = false;
+            updateDisplay();
+        }
+
+        function handleBackspace() {
+            playTone(350);
+            if (resetInput || calcInput === 'Error') return;
+            calcInput = calcInput.length === 1 ? '0' : calcInput.slice(0, -1);
+            updateDisplay();
+        }
+
+        function toggleSign() {
+            playTone(450);
+            if (calcInput === '0' || calcInput === 'Error') return;
+            calcInput = calcInput.startsWith('-') ? calcInput.slice(1) : '-' + calcInput;
+            updateDisplay();
+        }
+
+        function handlePercent() {
+            playTone(480);
+            if (calcInput === 'Error') return;
+            calcInput = String(parseFloat(calcInput) / 100);
+            updateDisplay();
+        }
+
+        function scientificOp(type) {
+            playTone(620);
+            const val = parseFloat(calcInput);
+            if (isNaN(val)) return;
+
+            let res = 0;
+            switch(type) {
+                case 'sin': res = Math.sin(val); break;
+                case 'cos': res = Math.cos(val); break;
+                case 'tan': res = Math.tan(val); break;
+                case 'sqrt': res = Math.sqrt(val); break;
+                case 'pow': res = Math.pow(val, 2); break;
+            }
+            calcInput = String(parseFloat(res.toFixed(8)));
+            resetInput = true;
+            updateDisplay();
+        }
+
+        function calculateResult(isEquals = true) {
+            if (prevExpr === '' || calcInput === 'Error') return;
+
+            const rawExpr = prevExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+            const fullExpr = `${prevExpr} ${calcInput}`;
+
+            try {
+                const evalRes = new Function(`return ${rawExpr} ${calcInput}`)();
+                if (!isFinite(evalRes) || isNaN(evalRes)) {
+                    calcInput = 'Error';
+                } else {
+                    const cleanRes = String(parseFloat(evalRes.toFixed(8)));
+                    addHistory(fullExpr, cleanRes);
+                    calcInput = cleanRes;
+                    if (isEquals) {
+                        prevExpr = '';
+                        playTone(750);
+                    }
+                }
+            } catch {
+                calcInput = 'Error';
+            }
+            resetInput = true;
+            updateDisplay();
+        }
+
+        function addHistory(expr, result) {
+            history.unshift({ expr, result });
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            const empty = document.getElementById('emptyHistory');
+
+            if (history.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+            
+            list.querySelectorAll('.hist-item').forEach(e => e.remove());
+
+            history.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'hist-item glass-card p-2.5 rounded-xl text-right cursor-pointer hover:border-indigo-500/40 transition-all';
+                div.innerHTML = `
+                    <div class="text-[11px] text-slate-400 font-mono">${item.expr} =</div>
+                    <div class="text-sm font-bold font-mono text-indigo-300">${item.result}</div>
+                `;
+                div.onclick = () => {
+                    calcInput = item.result;
+                    resetInput = false;
+                    updateDisplay();
+                    playTone(550);
+                };
+                list.appendChild(div);
+            });
+        }
+
+        function clearHistory() {
+            history = [];
+            renderHistory();
+            playTone(250);
+        }
+
+        // --- Tab Calculators Logic ---
+        function calculateBMI() {
+            const h = parseFloat(document.getElementById('bmiHeight').value) / 100;
+            const w = parseFloat(document.getElementById('bmiWeight').value);
+            if (!h || !w) return;
+
+            const bmi = (w / (h * h)).toFixed(1);
+            document.getElementById('bmiScore').textContent = bmi;
+
+            const badge = document.getElementById('bmiBadge');
+            const advice = document.getElementById('bmiAdvice');
+
+            if (bmi < 18.5) {
+                badge.textContent = "Underweight";
+                badge.className = "inline-block px-3.5 py-1 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30";
+                advice.textContent = "Your BMI indicates you are underweight. Consider consulting a nutritionist for balanced weight gaining strategies.";
+            } else if (bmi <= 24.9) {
+                badge.textContent = "Normal Weight";
+                badge.className = "inline-block px-3.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                advice.textContent = "Your BMI is within the healthy range. Keep maintaining a balanced diet and regular physical activity!";
+            } else {
+                badge.textContent = "Overweight";
+                badge.className = "inline-block px-3.5 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30";
+                advice.textContent = "Your BMI is slightly high. Adding lightweight workouts and fiber-rich meals can help regulate healthy body balance.";
+            }
+            playTone(600);
+        }
+
+        function convertCurrency() {
+            const amount = parseFloat(document.getElementById('currAmount').value) || 0;
+            const from = document.getElementById('currFrom').value;
+            const to = document.getElementById('currTo').value;
+
+            // Simulated exchange rates relative to 1 USD
+            const rates = { USD: 1, EUR: 0.92, GBP: 0.78, IDR: 15850, JPY: 155.2 };
+            const inUSD = amount / rates[from];
+            const converted = inUSD * rates[to];
+
+            document.getElementById('currResult').textContent = `${to} ${converted.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('currRateNote').textContent = `1 ${from} = ${(rates[to]/rates[from]).toFixed(4)} ${to}`;
+            playTone(600);
+        }
+
+        function swapCurrencies() {
+            const from = document.getElementById('currFrom');
+            const to = document.getElementById('currTo');
+            const temp = from.value;
+            from.value = to.value;
+            to.value = temp;
+            convertCurrency();
+        }
+
+        function calculateInvestment() {
+            const p = parseFloat(document.getElementById('invInitial').value) || 0;
+            const m = parseFloat(document.getElementById('invMonthly').value) || 0;
+            const r = (parseFloat(document.getElementById('invRate').value) || 0) / 100 / 12;
+            const n = (parseFloat(document.getElementById('invYears').value) || 0) * 12;
+
+            let total = p;
+            let principal = p;
+
+            for (let i = 0; i < n; i++) {
+                total = (total + m) * (1 + r);
+                principal += m;
+            }
+
+            const interest = total - principal;
+            document.getElementById('invTotal').textContent = `$${total.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+            document.getElementById('invPrincipal').textContent = `$${principal.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+            document.getElementById('invInterest').textContent = `$${interest.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+            playTone(600);
+        }
+
+        function calculateLoan() {
+            const p = parseFloat(document.getElementById('loanAmount').value) || 0;
+            const r = (parseFloat(document.getElementById('loanRate').value) || 0) / 100 / 12;
+            const n = (parseFloat(document.getElementById('loanYears').value) || 0) * 12;
+
+            const monthly = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+            const totalPay = monthly * n;
+            const totalInt = totalPay - p;
+
+            document.getElementById('loanMonthly').textContent = `$${monthly.toFixed(2)}`;
+            document.getElementById('loanTotalPay').textContent = `$${totalPay.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+            document.getElementById('loanTotalInt').textContent = `$${totalInt.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+            playTone(600);
+        }
+
+        function calculateSavings() {
+            const goal = parseFloat(document.getElementById('savGoal').value) || 0;
+            const cur = parseFloat(document.getElementById('savCurrent').value) || 0;
+            const months = parseFloat(document.getElementById('savMonths').value) || 1;
+
+            const required = Math.max(0, (goal - cur) / months);
+            document.getElementById('savRequired').textContent = `$${required.toFixed(2)}`;
+            document.getElementById('savNote').textContent = `Save $${required.toFixed(2)} each month to reach your $${goal.toLocaleString()} goal in ${months} months!`;
+            playTone(600);
+        }
+
+        // --- Copy Clipboard & Helpers ---
+        function copyToClipboardCurrent() {
+            let value = calcInput;
+            if (currentTab === 'bmi') value = document.getElementById('bmiScore').textContent;
+            if (currentTab === 'currency') value = document.getElementById('currResult').textContent;
+            if (currentTab === 'investment') value = document.getElementById('invTotal').textContent;
+            if (currentTab === 'loan') value = document.getElementById('loanMonthly').textContent;
+            if (currentTab === 'savings') value = document.getElementById('savRequired').textContent;
+
+            const dummy = document.createElement('textarea');
+            document.body.appendChild(dummy);
+            dummy.value = value;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+
+            showToast(`Copied "${value}" to clipboard!`);
+            playTone(700);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2200);
+        }
+
+        // Event Listeners
+        document.getElementById('mobileMenuBtn').onclick = () => {
+            const nav = document.getElementById('navContainer');
+            nav.classList.toggle('hidden');
+        };
+
+        document.getElementById('soundToggle').onclick = () => {
+            audioActive = !audioActive;
+            const icon = document.getElementById('soundIcon');
+            icon.setAttribute('data-lucide', audioActive ? 'volume-2' : 'volume-x');
+            lucide.createIcons();
+            showToast(audioActive ? "Sound FX Enabled" : "Sound FX Muted");
+        };
+
+        // Keyboard Support for Standard Calculator
+        window.addEventListener('keydown', (e) => {
+            if (currentTab !== 'standard') return;
+            if (e.key >= '0' && e.key <= '9') appendDigit(e.key);
+            else if (e.key === '.') appendDecimal();
+            else if (['+', '-', '*', '/'].includes(e.key)) handleOperator(e.key);
+            else if (e.key === 'Enter' || e.key === '=') { e.preventDefault(); calculateResult(true); }
+            else if (e.key === 'Backspace') handleBackspace();
+            else if (e.key === 'Escape') handleClear();
+        });
+
+        // Initialize Lucide Icons
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            updateDisplay();
+            convertCurrency();
+            calculateBMI();
+            calculateInvestment();
+            calculateLoan();
+            calculateSavings();
+        });
+    </script>
+</body>
+</html>
